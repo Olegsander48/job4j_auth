@@ -1,5 +1,6 @@
 package ru.job4j.service;
 
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.job4j.model.Person;
 import ru.job4j.repository.PersonRepository;
@@ -18,11 +19,26 @@ public class SimplePersonService implements PersonService {
 
     @Override
     public Person save(Person person) {
+        if (person.getLogin() == null || person.getLogin().isBlank()) {
+            throw new IllegalArgumentException("Login cannot be null or empty");
+        }
+        if (person.getPassword() == null || person.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
         return personRepository.save(person);
     }
 
     @Override
     public void update(Person person) {
+        if (!personRepository.existsById(person.getId())) {
+            throw new ObjectNotFoundException("Person with id", person.getId());
+        }
+        if (person.getLogin() == null || person.getLogin().isBlank()) {
+            throw new IllegalArgumentException("Login cannot be null or empty");
+        }
+        if (person.getPassword() == null || person.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
         personRepository.save(person);
     }
 
@@ -33,6 +49,12 @@ public class SimplePersonService implements PersonService {
 
     @Override
     public void deleteById(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Id cannot be negative or zero");
+        }
+        if (!personRepository.existsById(id)) {
+            throw new ObjectNotFoundException("Person with id", id);
+        }
         personRepository.deleteById(id);
     }
 

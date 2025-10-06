@@ -1,5 +1,6 @@
 package ru.job4j.controller;
 
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,9 @@ public class PersonController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Person> findById(@PathVariable int id) {
-        var person = personService.findById(id);
-        return new ResponseEntity<>(
-                person.orElse(new Person()),
-                person.isPresent() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+        return personService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ObjectNotFoundException("Person with id", id));
     }
 
     @PostMapping("/")
