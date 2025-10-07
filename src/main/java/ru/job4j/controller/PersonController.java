@@ -1,12 +1,12 @@
 package ru.job4j.controller;
 
 import org.hibernate.ObjectNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.model.Person;
 import ru.job4j.service.PersonService;
-
 import java.util.List;
 
 @RestController
@@ -47,5 +47,12 @@ public class PersonController {
     public ResponseEntity<Void> delete(@PathVariable int id) {
         personService.deleteById(id);
         return ResponseEntity.ok().build();
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleException() {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("Person already exists");
     }
 }
