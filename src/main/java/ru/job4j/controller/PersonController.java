@@ -32,21 +32,21 @@ public class PersonController {
 
     @PostMapping("/")
     public ResponseEntity<Person> create(@RequestBody Person person) {
-        return new ResponseEntity<>(
-                personService.save(person),
-                HttpStatus.CREATED);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(personService.save(person));
     }
 
     @PutMapping("/")
-    public ResponseEntity<Person> update(@RequestBody Person person) {
+    public ResponseEntity<String> update(@RequestBody Person person) {
         personService.update(person);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("updated successfully");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
+    public ResponseEntity<String> delete(@PathVariable int id) {
         personService.deleteById(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Deleted successfully");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
