@@ -1,6 +1,9 @@
 package ru.job4j.service;
 
 import org.hibernate.ObjectNotFoundException;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.job4j.model.Person;
 import ru.job4j.repository.PersonRepository;
@@ -63,5 +66,14 @@ public class SimplePersonService implements PersonService {
         List<Person> persons = new ArrayList<>();
         personRepository.findAll().forEach(persons::add);
         return persons;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Person person = personRepository.findPersonByLogin(username);
+        if (person == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new User(person.getLogin(), person.getPassword(), new ArrayList<>());
     }
 }

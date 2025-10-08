@@ -4,6 +4,7 @@ import org.hibernate.ObjectNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.model.Person;
 import ru.job4j.service.PersonService;
@@ -13,9 +14,11 @@ import java.util.List;
 @RequestMapping("/person")
 public class PersonController {
     private final PersonService personService;
+    private final PasswordEncoder passwordEncoder;
 
-    public PersonController(PersonService personService) {
+    public PersonController(PersonService personService, PasswordEncoder passwordEncoder) {
         this.personService = personService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping("/")
@@ -32,6 +35,7 @@ public class PersonController {
 
     @PostMapping("/")
     public ResponseEntity<Person> create(@RequestBody Person person) {
+        person.setPassword(passwordEncoder.encode(person.getPassword()));
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(personService.save(person));
