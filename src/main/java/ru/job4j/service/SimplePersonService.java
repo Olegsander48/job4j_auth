@@ -1,5 +1,7 @@
 package ru.job4j.service;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.hibernate.ObjectNotFoundException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -8,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.job4j.model.Person;
 import ru.job4j.repository.PersonRepository;
+import ru.job4j.validation.Operation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,20 +20,16 @@ import java.util.Optional;
 public class SimplePersonService implements PersonService {
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Validator validator;
 
-    public SimplePersonService(PersonRepository personRepository, PasswordEncoder passwordEncoder) {
+    public SimplePersonService(PersonRepository personRepository, PasswordEncoder passwordEncoder, Validator validator) {
         this.personRepository = personRepository;
         this.passwordEncoder = passwordEncoder;
+        this.validator = validator;
     }
 
     @Override
     public Person save(Person person) {
-        if (isCredentialInvalid(person.getLogin())) {
-            throw new IllegalArgumentException("Login cannot be null or empty");
-        }
-        if (isCredentialInvalid(person.getPassword())) {
-            throw new IllegalArgumentException("Password cannot be null or empty");
-        }
         person.setPassword(passwordEncoder.encode(person.getPassword()));
         return personRepository.save(person);
     }
@@ -41,17 +40,13 @@ public class SimplePersonService implements PersonService {
         if (personOptional.isEmpty()) {
             throw new ObjectNotFoundException("Person with id", person.getId());
         }
-        if (!isCredentialInvalid(person.getLogin()) && isCredentialInvalid(person.getPassword())) {
+        if (validator.validate(person, Operation.OnUpdateWithLogin.class).isEmpty()) {
             personOptional.get().setLogin(person.getLogin());
-        } else if (isCredentialInvalid(person.getLogin()) && !isCredentialInvalid(person.getPassword())) {
+        }
+        if (validator.validate(person, Operation.OnUpdateWithPassword.class).isEmpty()) {
             personOptional.get().setPassword(passwordEncoder.encode(person.getPassword()));
         } else {
-            if (isCredentialInvalid(person.getLogin())) {
-                throw new IllegalArgumentException("Login cannot be null or empty");
-            }
-            if (isCredentialInvalid(person.getPassword())) {
-                throw new IllegalArgumentException("Password cannot be null or empty");
-            }
+            throw new ConstraintViolationException("Login and password cannot be null", null);
         }
         personRepository.save(personOptional.get());
     }
@@ -63,9 +58,6 @@ public class SimplePersonService implements PersonService {
 
     @Override
     public void deleteById(int id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException("Id cannot be negative or zero");
-        }
         if (!personRepository.existsById(id)) {
             throw new ObjectNotFoundException("Person with id", id);
         }
@@ -77,10 +69,6 @@ public class SimplePersonService implements PersonService {
         List<Person> persons = new ArrayList<>();
         personRepository.findAll().forEach(persons::add);
         return persons;
-    }
-
-    private boolean isCredentialInvalid(String credential) {
-        return credential == null || credential.isBlank();
     }
 
     @Override
